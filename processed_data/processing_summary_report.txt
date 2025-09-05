@@ -1,0 +1,49 @@
+IPEDS DATA PROCESSING SUMMARY REPORT
+==================================================
+
+OVERALL STATISTICS
+--------------------
+Total institutions processed: 35650662
+Total columns in unified dataset: 137
+
+DATASET BREAKDOWN
+------------------
+Institutional_Directory: 6163 institutions
+Admissions: 1972 institutions
+Enrollment: 35650412 institutions
+Finance: 5772 institutions
+
+INSTITUTION TYPES
+-----------------
+Public: 19509524
+Private nonprofit: 14306303
+Private for-profit: 1834806
+
+DATA QUALITY ASSESSMENT
+-----------------------
+Excellent (90%+): 18661099
+Fair (50-69%): 15195605
+Good (70-89%): 1793929
+Poor (<50%): 29
+
+MISSING DATA ANALYSIS
+---------------------
+net_income: 35650662 (100.0%)
+expense_ratio: 35650662 (100.0%)
+F3A03: 34828391 (97.7%)
+F3A02: 34828391 (97.7%)
+F3A04: 34828391 (97.7%)
+F3A05: 34828391 (97.7%)
+F3A01: 34828391 (97.7%)
+F2A20: 21626093 (60.7%)
+F2A19: 21626093 (60.7%)
+F2A17: 21626093 (60.7%)
+
+
+Report generated successfully!
+Files created:
+- unified_ipeds_dataset.csv (main dataset)
+- institutional_directory_processed.csv
+- admissions_processed.csv
+- enrollment_processed.csv
+- finance_processed.csv
