@@ -1,7 +1,0 @@
-Data Processing Validation Report
-========================================
-
-total_records: 35650412
-duplicate_unitids: 35644499
-missing_data_by_column: {'UNITID': 0, 'EFTOTLT': 0, 'EFAGE01': 0, 'EFAGE02': 0, 'EFAGE03': 0, 'EFAGE04': 0, 'EFAGE05': 0, 'EFAGE06': 0, 'EFAGE07': 0, 'EFAGE08': 0, 'EFRES01': 1692317}
-data_types: {'UNITID': dtype('int64'), 'EFTOTLT': dtype('int64'), 'EFAGE01': dtype('int64'), 'EFAGE02': dtype('int64'), 'EFAGE03': dtype('int64'), 'EFAGE04': dtype('int64'), 'EFAGE05': dtype('int64'), 'EFAGE06': dtype('int64'), 'EFAGE07': dtype('int64'), 'EFAGE08': dtype('int64'), 'EFRES01': dtype('float64')}
