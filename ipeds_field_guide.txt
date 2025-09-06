@@ -1,0 +1,179 @@
+IPEDS FIELD DECODER CHEAT SHEET
+==================================================
+Generated for University Search Application Development
+This guide explains what all the numeric codes in IPEDS data mean.
+
+🏛️ CONTROL - Institution Control/Ownership
+---------------------------------------------
+   1 = Public
+   2 = Private nonprofit
+   3 = Private for-profit
+   -1 = Not applicable
+   -2 = Not applicable
+   Use: control_type column (human-readable version)
+
+🎓 ICLEVEL - Institutional Level
+-----------------------------------
+   1 = Four or more years
+   2 = At least 2 but less than 4 years
+   3 = Less than 2 years
+   -1 = Not applicable
+   -2 = Not applicable
+   Use: institutional_level column (human-readable version)
+
+📜 HLOFFER - Highest Level of Offering
+----------------------------------------
+   0 = Other
+   1 = Award of less than one academic year
+   2 = Award of at least one but less than two academic years
+   3 = Associate degree
+   4 = Award of at least two but less than four academic years
+   5 = Bachelor's degree
+   6 = Postbaccalaureate certificate
+   7 = Master's degree
+   8 = Post-master's certificate
+   9 = Doctor's degree
+   -1 = Not applicable
+   -2 = Not applicable
+   Note: 9 is most common for universities (Doctor's degree)
+
+📊 INSTSIZE - Institution Size (by FTE enrollment)
+--------------------------------------------------
+   1 = Very small (under 1,000)
+   2 = Small (1,000-2,999)
+   3 = Medium (3,000-9,999)
+   4 = Large (10,000-19,999)
+   5 = Very large (20,000 and above)
+   -1 = Not reported
+   -2 = Not applicable
+   Use: size_category column (human-readable version)
+
+🏆 CCBASIC - Carnegie Basic Classification
+---------------------------------------------
+Research Universities:
+   15 = R1: Doctoral Universities - Very High Research Activity
+   16 = R2: Doctoral Universities - High Research Activity
+   17 = D/PU: Doctoral/Professional Universities
+
+Master's Universities:
+   18 = M1: Master's Colleges & Universities - Larger Programs
+   19 = M2: Master's Colleges & Universities - Medium Programs
+   20 = M3: Master's Colleges & Universities - Small Programs
+
+Baccalaureate Colleges:
+   21 = Bac/A&S: Baccalaureate Colleges - Arts & Sciences Focus
+   22 = Bac/Diverse: Baccalaureate Colleges - Diverse Fields
+   23 = Bac/Assoc: Baccalaureate/Associate's Colleges
+
+Associate's Colleges (Community Colleges):
+   24 = Assoc/HT-High Trad: Associate's High Transfer-High Traditional
+   25 = Assoc/HT-Mixed: Associate's High Transfer-Mixed Traditional/Nontraditional
+   26 = Assoc/HT-High Nontr: Associate's High Transfer-High Nontraditional
+   27 = Assoc/Mixed-High Trad: Associate's Mixed Transfer/Career & Technical-High Traditional
+   28 = Assoc/Mixed-Mixed: Associate's Mixed Transfer/Career & Technical-Mixed Traditional/Nontraditional
+   29 = Assoc/Mixed-High Nontr: Associate's Mixed Transfer/Career & Technical-High Nontraditional
+   30 = Assoc/HC&T-High Trad: Associate's High Career & Technical-High Traditional
+   31 = Assoc/HC&T-Mixed: Associate's High Career & Technical-Mixed Traditional/Nontraditional
+   32 = Assoc/HC&T-High Nontr: Associate's High Career & Technical-High Nontraditional
+
+Special Focus Institutions:
+   33 = Spec/2-yr-Health: Special Focus Two-Year: Health Professions & Other Fields
+   34 = Spec/2-yr-Tech: Special Focus Two-Year: Technical Professions
+   35 = Spec/4-yr-Faith: Special Focus Four-Year: Faith-Related Institutions
+   36 = Spec/4-yr-Medical: Special Focus Four-Year: Medical Schools & Medical Centers
+   37 = Spec/4-yr-Health: Special Focus Four-Year: Other Health Professions Schools
+   38 = Spec/4-yr-Engin: Special Focus Four-Year: Engineering Schools
+   39 = Spec/4-yr-Tech: Special Focus Four-Year: Other Technology-Related Schools
+   40 = Spec/4-yr-Bus: Special Focus Four-Year: Business & Management Schools
+   41 = Spec/4-yr-Arts: Special Focus Four-Year: Arts, Music & Design Schools
+   42 = Spec/4-yr-Law: Special Focus Four-Year: Law Schools
+   43 = Spec/4-yr-Other: Special Focus Four-Year: Other Special Focus Institutions
+   Use: carnegie_basic_desc column (human-readable version)
+
+🏛️ SPECIAL DESIGNATIONS (1=Yes, 2=No)
+---------------------------------------------
+HBCU: Historically Black Colleges and Universities
+   1 = Yes (has this designation)
+   2 = No (does not have this designation)
+
+TRIBAL: Tribal College
+   1 = Yes (has this designation)
+   2 = No (does not have this designation)
+
+LANDGRNT: Land Grant Institution
+   1 = Yes (has this designation)
+   2 = No (does not have this designation)
+
+MEDICAL: Has Medical Degree Programs
+   1 = Yes (has this designation)
+   2 = No (does not have this designation)
+
+HOSPITAL: Operates a Hospital
+   1 = Yes (has this designation)
+   2 = No (does not have this designation)
+
+📚 PROGRAM OFFERINGS (1=Yes, 2=No)
+----------------------------------------
+UGOFFER: Offers Undergraduate Programs
+GROFFER: Offers Graduate Programs
+DEGGRANT: Degree-Granting Institution
+   1 = Yes, 2 = No
+
+📝 ADMISSIONS DATA FIELDS
+------------------------------
+APPLCN: Total applications received
+ADMSSN: Total admissions offered
+ENRLT: Total enrolled
+acceptance_rate: Calculated percentage (ADMSSN/APPLCN * 100)
+yield_rate: Calculated percentage (ENRLT/ADMSSN * 100)
+
+📊 STANDARDIZED TEST SCORES
+-----------------------------------
+SAT Scores:
+   SATVR25/SATVR75: Evidence-Based Reading & Writing (25th/75th percentile)
+   SATMT25/SATMT75: Math (25th/75th percentile)
+   sat_total_25/sat_total_75: Combined scores (calculated)
+
+ACT Scores:
+   ACTCM25/ACTCM75: Composite (25th/75th percentile)
+   ACTEN25/ACTEN75: English (25th/75th percentile)
+   ACTMT25/ACTMT75: Math (25th/75th percentile)
+
+👥 ENROLLMENT DATA
+--------------------
+EFTOTLT: Total fall enrollment
+student_body_size: Cleaned enrollment number
+enrollment_size_category: Human-readable size category
+
+🎯 QUICK REFERENCE FOR APP DEVELOPMENT
+---------------------------------------------
+USE THESE HUMAN-READABLE COLUMNS:
+✅ control_type (instead of CONTROL)
+✅ size_category (instead of INSTSIZE)
+✅ institutional_level (instead of ICLEVEL)
+✅ carnegie_basic_desc (instead of CCBASIC)
+✅ location (instead of CITY + STABBR)
+✅ selectivity_category (calculated from acceptance_rate)
+
+MOST USEFUL SEARCH FIELDS:
+🔍 INSTNM: Institution name
+🔍 location: City, State
+🔍 control_type: Public, Private nonprofit, Private for-profit
+🔍 size_category: Very small, Small, Medium, Large, Very large
+🔍 acceptance_rate: Percentage (lower = more selective)
+🔍 student_body_size: Number of students
+🔍 sat_total_75: SAT scores (75th percentile)
+🔍 carnegie_basic_desc: Academic focus/research level
+
+SEARCH FILTER SUGGESTIONS:
+📍 State: Use STABBR (CA, NY, TX, etc.)
+🏛️ Type: Use control_type
+📏 Size: Use size_category or student_body_size
+🎯 Selectivity: Use acceptance_rate or selectivity_category
+📊 Test Scores: Use sat_total_75 or ACTCM75
+🎓 Level: Use institutional_level
+
+--------------------------------------------------
+Generated by IPEDS Decoder Utility
+For technical questions, refer to IPEDS documentation
+Data source: U.S. Department of Education, NCES, IPEDS
