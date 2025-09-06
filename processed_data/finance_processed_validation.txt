@@ -1,0 +1,34 @@
+ENHANCED DATA PROCESSING VALIDATION REPORT
+=============================================
+
+BASIC STATISTICS
+----------------
+total_records: 6163
+unique_unitids: 6163
+duplicate_unitids: 0
+unitid_min: 100654
+unitid_max: 499723
+unitid_null_count: 0
+data_quality_score: 100
+
+DATA QUALITY ASSESSMENT
+-----------------------
+has_duplicate_unitids: ✅ PASS
+too_many_institutions: ✅ PASS
+too_few_institutions: ✅ PASS
+has_invalid_unitids: ✅ PASS
+
+Overall Quality Score: 100/100
+
+MISSING DATA ANALYSIS
+---------------------
+tuition_in_state: 6163 (100.0%)
+tuition_out_state: 6163 (100.0%)
+required_fees: 6163 (100.0%)
+room_and_board: 6163 (100.0%)
+total_in_state_tuition_fees: 6163 (100.0%)
+total_out_state_tuition_fees: 6163 (100.0%)
+total_cost_in_state: 6163 (100.0%)
+total_cost_out_state: 6163 (100.0%)
+net_income: 6163 (100.0%)
+expense_ratio: 6163 (100.0%)
