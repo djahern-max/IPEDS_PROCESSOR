@@ -255,18 +255,30 @@ class FinanceProcessor(IPEDSProcessor):
         return df_assets_filtered
 
     def _process_tuition_data(self, df: pd.DataFrame) -> pd.DataFrame:
-        """Process tuition and fee data from institutional characteristics."""
+        """Process tuition and fee data from institutional characteristics - FIXED VERSION."""
 
-        # Comprehensive tuition columns
+        # First, let's check what columns actually exist in the IC file
+        print(
+            f"DEBUG: IC2023 columns available: {list(df.columns)[:20]}..."
+        )  # Show first 20 columns
+
+        # Comprehensive tuition columns - updated to match actual IPEDS column names
         tuition_columns = [
             "UNITID",
-            # Published tuition and fees
+            # In-state tuition (these may have different names in 2023)
             "TUITION1",
             "TUITION2",
-            "TUITION3",  # In-state undergraduate
+            "TUITION3",
+            "CHG1AY3",
+            "CHG2AY3",
+            "CHG3AY3",
+            # Out-of-state tuition
             "TUITION5",
             "TUITION6",
-            "TUITION7",  # Out-of-state undergraduate
+            "TUITION7",
+            "CHG4AY3",
+            "CHG5AY3",
+            "CHG6AY3",
             # Required fees
             "FEE1",
             "FEE2",
@@ -275,7 +287,11 @@ class FinanceProcessor(IPEDSProcessor):
             "FEE5",
             "FEE6",
             "FEE7",
-            # Room and board charges
+            # Room and board - check actual IC2023 column names
+            "ROOMCAP",
+            "BOARDCAP",
+            "ROOMAMT",
+            "BOARDAMT",
             "CHG1AT0",
             "CHG1AT1",
             "CHG1AT2",
@@ -287,88 +303,341 @@ class FinanceProcessor(IPEDSProcessor):
             "CHG3AT0",
             "CHG3AT1",
             "CHG3AT2",
-            "CHG3AT3",  # Room and board combined
-            # Per credit hour charges
-            "HRCHG1",
-            "HRCHG2",
-            "HRCHG3",
-            "HRCHG4",
-            "HRCHG5",
+            "CHG3AT3",  # Combined room/board
         ]
 
-        available_cols = [col for col in tuition_columns if col in df.columns]
+        # Only use columns that actually exist in the data
+        available_cols = ["UNITID"] + [
+            col for col in tuition_columns[1:] if col in df.columns
+        ]
+        print(
+            f"DEBUG: Using {len(available_cols)-1} tuition columns out of {len(tuition_columns)-1} possible"
+        )
+
+        if len(available_cols) == 1:  # Only UNITID found
+            print("WARNING: No tuition columns found in IC2023 file!")
+            return pd.DataFrame({"UNITID": df["UNITID"].unique()})
+
         df_tuition = df[available_cols].copy()
 
         # Clean numeric columns
         numeric_cols = [col for col in available_cols if col != "UNITID"]
         df_tuition = self.clean_numeric_columns(df_tuition, numeric_cols)
 
-        # Create standardized tuition fields
+        # Create standardized tuition fields - FIXED VERSION
         self._standardize_tuition_fields(df_tuition)
 
-        # Only return institutions that have ANY tuition data
-        if numeric_cols:
-            mask = df_tuition[numeric_cols].notna().any(axis=1)
+        # Only return institutions that have ANY standardized tuition data
+        standardized_cols = [
+            "tuition_in_state",
+            "tuition_out_state",
+            "required_fees",
+            "room_and_board",
+        ]
+        existing_standardized = [
+            col for col in standardized_cols if col in df_tuition.columns
+        ]
+
+        if existing_standardized:
+            mask = df_tuition[existing_standardized].notna().any(axis=1)
             df_tuition_filtered = df_tuition[mask].copy()
         else:
+            print("WARNING: No standardized tuition fields created!")
             df_tuition_filtered = df_tuition.copy()
 
-        self.logger.info(
-            f"Tuition processing: {len(df_tuition_filtered)} institutions with tuition data"
+        print(
+            f"DEBUG: Created {len(existing_standardized)} standardized tuition fields"
+        )
+        print(
+            f"DEBUG: Tuition processing result: {len(df_tuition_filtered)} institutions with tuition data"
         )
 
         return df_tuition_filtered
 
     def _standardize_tuition_fields(self, df: pd.DataFrame):
-        """Create standardized tuition and fee fields with comprehensive coverage."""
+        """Create standardized tuition and fee fields - FIXED VERSION."""
+        print("DEBUG: Starting tuition field standardization...")
 
-        # In-state tuition (try multiple columns)
-        in_state_candidates = ["TUITION1", "TUITION2", "TUITION3"]
-        df["tuition_in_state"] = self._get_first_available_value(
-            df, in_state_candidates
-        )
+        # Debug: Show what columns we're working with
+        print(f"DEBUG: Available columns for standardization: {list(df.columns)}")
+
+        # In-state tuition (try multiple possible column names)
+        in_state_candidates = [
+            "TUITION1",
+            "TUITION2",
+            "TUITION3",
+            "CHG1AY3",
+            "CHG2AY3",
+            "CHG3AY3",
+        ]
+        available_in_state = [col for col in in_state_candidates if col in df.columns]
+        print(f"DEBUG: In-state tuition candidates found: {available_in_state}")
+
+        if available_in_state:
+            df["tuition_in_state"] = self._get_first_available_value(
+                df, available_in_state
+            )
+            in_state_count = df["tuition_in_state"].notna().sum()
+            print(f"DEBUG: Created tuition_in_state for {in_state_count} institutions")
 
         # Out-of-state tuition
-        out_state_candidates = ["TUITION5", "TUITION6", "TUITION7"]
-        df["tuition_out_state"] = self._get_first_available_value(
-            df, out_state_candidates
-        )
+        out_state_candidates = [
+            "TUITION5",
+            "TUITION6",
+            "TUITION7",
+            "CHG4AY3",
+            "CHG5AY3",
+            "CHG6AY3",
+        ]
+        available_out_state = [col for col in out_state_candidates if col in df.columns]
+        print(f"DEBUG: Out-of-state tuition candidates found: {available_out_state}")
+
+        if available_out_state:
+            df["tuition_out_state"] = self._get_first_available_value(
+                df, available_out_state
+            )
+            out_state_count = df["tuition_out_state"].notna().sum()
+            print(
+                f"DEBUG: Created tuition_out_state for {out_state_count} institutions"
+            )
 
         # Required fees
         fee_candidates = ["FEE1", "FEE2", "FEE3", "FEE4", "FEE5", "FEE6", "FEE7"]
-        df["required_fees"] = self._get_first_available_value(df, fee_candidates)
+        available_fees = [col for col in fee_candidates if col in df.columns]
+        print(f"DEBUG: Fee candidates found: {available_fees}")
 
-        # Room and board (prefer combined, fall back to separate)
-        room_board_candidates = ["CHG3AT0", "CHG3AT1", "CHG3AT2", "CHG3AT3"]
-        df["room_and_board"] = self._get_first_available_value(
-            df, room_board_candidates
-        )
+        if available_fees:
+            df["required_fees"] = self._get_first_available_value(df, available_fees)
+            fee_count = df["required_fees"].notna().sum()
+            print(f"DEBUG: Created required_fees for {fee_count} institutions")
 
-        # If no combined room/board, try to calculate from separate
-        if df["room_and_board"].isna().all():
-            room_candidates = ["CHG1AT0", "CHG1AT1", "CHG1AT2", "CHG1AT3"]
-            board_candidates = ["CHG2AT0", "CHG2AT1", "CHG2AT2", "CHG2AT3"]
+        # Room and board - try multiple approaches
+        room_board_candidates = [
+            "CHG3AT0",
+            "CHG3AT1",
+            "CHG3AT2",
+            "CHG3AT3",
+            "ROOMAMT",
+            "BOARDAMT",
+        ]
+        available_rb = [col for col in room_board_candidates if col in df.columns]
+        print(f"DEBUG: Room/board candidates found: {available_rb}")
 
-            room_charges = self._get_first_available_value(df, room_candidates)
-            board_charges = self._get_first_available_value(df, board_candidates)
+        if available_rb:
+            # Try combined room/board first
+            combined_candidates = ["CHG3AT0", "CHG3AT1", "CHG3AT2", "CHG3AT3"]
+            available_combined = [
+                col for col in combined_candidates if col in df.columns
+            ]
 
-            # Sum room and board if both available
-            mask = pd.notna(room_charges) & pd.notna(board_charges)
-            df.loc[mask, "room_and_board"] = room_charges[mask] + board_charges[mask]
+            if available_combined:
+                df["room_and_board"] = self._get_first_available_value(
+                    df, available_combined
+                )
+            else:
+                # Try to sum separate room and board charges
+                room_candidates = [
+                    "CHG1AT0",
+                    "CHG1AT1",
+                    "CHG1AT2",
+                    "CHG1AT3",
+                    "ROOMAMT",
+                ]
+                board_candidates = [
+                    "CHG2AT0",
+                    "CHG2AT1",
+                    "CHG2AT2",
+                    "CHG2AT3",
+                    "BOARDAMT",
+                ]
 
-        # Calculate total costs
-        df["total_in_state_tuition_fees"] = self._safe_add(
-            df["tuition_in_state"], df["required_fees"]
-        )
-        df["total_out_state_tuition_fees"] = self._safe_add(
-            df["tuition_out_state"], df["required_fees"]
-        )
-        df["total_cost_in_state"] = self._safe_add(
-            df["total_in_state_tuition_fees"], df["room_and_board"]
-        )
-        df["total_cost_out_state"] = self._safe_add(
-            df["total_out_state_tuition_fees"], df["room_and_board"]
-        )
+                available_room = [col for col in room_candidates if col in df.columns]
+                available_board = [col for col in board_candidates if col in df.columns]
+
+                if available_room and available_board:
+                    room_charges = self._get_first_available_value(df, available_room)
+                    board_charges = self._get_first_available_value(df, available_board)
+
+                    # Sum if both exist
+                    mask = pd.notna(room_charges) & pd.notna(board_charges)
+                    df["room_and_board"] = pd.Series(index=df.index, dtype=float)
+                    df.loc[mask, "room_and_board"] = (
+                        room_charges[mask] + board_charges[mask]
+                    )
+
+                    # Use room only if board is missing
+                    room_only = pd.notna(room_charges) & pd.isna(board_charges)
+                    df.loc[room_only, "room_and_board"] = room_charges[room_only]
+
+                    # Use board only if room is missing
+                    board_only = pd.isna(room_charges) & pd.notna(board_charges)
+                    df.loc[board_only, "room_and_board"] = board_charges[board_only]
+
+            rb_count = (
+                df["room_and_board"].notna().sum()
+                if "room_and_board" in df.columns
+                else 0
+            )
+            print(f"DEBUG: Created room_and_board for {rb_count} institutions")
+
+        # Calculate total costs - FIXED
+        if "tuition_in_state" in df.columns and "required_fees" in df.columns:
+            df["total_in_state_tuition_fees"] = self._safe_add(
+                df["tuition_in_state"], df["required_fees"]
+            )
+            total_in_count = df["total_in_state_tuition_fees"].notna().sum()
+            print(
+                f"DEBUG: Created total_in_state_tuition_fees for {total_in_count} institutions"
+            )
+
+        if "tuition_out_state" in df.columns and "required_fees" in df.columns:
+            df["total_out_state_tuition_fees"] = self._safe_add(
+                df["tuition_out_state"], df["required_fees"]
+            )
+            total_out_count = df["total_out_state_tuition_fees"].notna().sum()
+            print(
+                f"DEBUG: Created total_out_state_tuition_fees for {total_out_count} institutions"
+            )
+
+        if (
+            "total_in_state_tuition_fees" in df.columns
+            and "room_and_board" in df.columns
+        ):
+            df["total_cost_in_state"] = self._safe_add(
+                df["total_in_state_tuition_fees"], df["room_and_board"]
+            )
+            cost_in_count = df["total_cost_in_state"].notna().sum()
+            print(
+                f"DEBUG: Created total_cost_in_state for {cost_in_count} institutions"
+            )
+
+        if (
+            "total_out_state_tuition_fees" in df.columns
+            and "room_and_board" in df.columns
+        ):
+            df["total_cost_out_state"] = self._safe_add(
+                df["total_out_state_tuition_fees"], df["room_and_board"]
+            )
+            cost_out_count = df["total_cost_out_state"].notna().sum()
+            print(
+                f"DEBUG: Created total_cost_out_state for {cost_out_count} institutions"
+            )
+
+        print("DEBUG: Tuition field standardization complete")
+
+    def add_derived_fields(self, df: pd.DataFrame) -> pd.DataFrame:
+        """Add derived fields for financial analysis - FIXED VERSION."""
+        print("DEBUG: Starting derived field calculations...")
+        print(f"DEBUG: Available columns: {list(df.columns)}")
+
+        df = df.copy()
+
+        # Financial health indicators - FIXED column name checking
+        has_revenues = "total_revenues" in df.columns
+        has_expenses = "total_expenses" in df.columns
+
+        print(f"DEBUG: Has total_revenues column: {has_revenues}")
+        print(f"DEBUG: Has total_expenses column: {has_expenses}")
+
+        if has_revenues:
+            revenue_count = df["total_revenues"].notna().sum()
+            print(f"DEBUG: Revenue data available for {revenue_count} institutions")
+
+        if has_expenses:
+            expense_count = df["total_expenses"].notna().sum()
+            print(f"DEBUG: Expense data available for {expense_count} institutions")
+
+        if has_revenues and has_expenses:
+            # Net income - only where both exist
+            both_exist = pd.notna(df["total_revenues"]) & pd.notna(df["total_expenses"])
+            both_count = both_exist.sum()
+            print(
+                f"DEBUG: Both revenue and expense data available for {both_count} institutions"
+            )
+
+            df["net_income"] = pd.Series(index=df.index, dtype=float)
+            df.loc[both_exist, "net_income"] = (
+                df.loc[both_exist, "total_revenues"]
+                - df.loc[both_exist, "total_expenses"]
+            )
+            net_income_count = df["net_income"].notna().sum()
+            print(f"DEBUG: Net income calculated for {net_income_count} institutions")
+
+            # Expense ratio - only where both exist and revenue > 0
+            valid_ratio = both_exist & (df["total_revenues"] > 0)
+            valid_ratio_count = valid_ratio.sum()
+            print(
+                f"DEBUG: Valid ratio calculations possible for {valid_ratio_count} institutions"
+            )
+
+            df["expense_ratio"] = pd.Series(index=df.index, dtype=float)
+            df.loc[valid_ratio, "expense_ratio"] = (
+                df.loc[valid_ratio, "total_expenses"]
+                / df.loc[valid_ratio, "total_revenues"]
+            ).round(3)
+            expense_ratio_count = df["expense_ratio"].notna().sum()
+            print(
+                f"DEBUG: Expense ratio calculated for {expense_ratio_count} institutions"
+            )
+
+            # Financial stability - conservative definition
+            df["financially_stable"] = 0
+            stable_mask = (
+                pd.notna(df["net_income"])
+                & (df["net_income"] >= 0)
+                & pd.notna(df["expense_ratio"])
+                & (df["expense_ratio"] <= 1.0)
+            )
+            stable_count = stable_mask.sum()
+            df.loc[stable_mask, "financially_stable"] = 1
+            print(f"DEBUG: Financially stable institutions: {stable_count}")
+
+        # Cost categories for tuition data
+        cost_columns = [
+            "total_in_state_tuition_fees",
+            "total_out_state_tuition_fees",
+            "total_cost_in_state",
+            "total_cost_out_state",
+        ]
+
+        for col in cost_columns:
+            if col in df.columns:
+                category_col = col + "_category"
+                df[category_col] = df[col].apply(self._categorize_cost)
+                category_count = df[category_col].notna().sum()
+                print(
+                    f"DEBUG: Created {category_col} for {category_count} institutions"
+                )
+
+        # Affordability flags
+        if "total_in_state_tuition_fees" in df.columns:
+            df["affordable_in_state"] = (
+                df["total_in_state_tuition_fees"] <= 15000
+            ).astype(int)
+            df["expensive_in_state"] = (
+                df["total_in_state_tuition_fees"] >= 40000
+            ).astype(int)
+            affordable_count = (df["affordable_in_state"] == 1).sum()
+            expensive_count = (df["expensive_in_state"] == 1).sum()
+            print(
+                f"DEBUG: Affordable in-state: {affordable_count}, Expensive in-state: {expensive_count}"
+            )
+
+        if "total_out_state_tuition_fees" in df.columns:
+            df["affordable_out_state"] = (
+                df["total_out_state_tuition_fees"] <= 25000
+            ).astype(int)
+            df["expensive_out_state"] = (
+                df["total_out_state_tuition_fees"] >= 50000
+            ).astype(int)
+            affordable_out_count = (df["affordable_out_state"] == 1).sum()
+            expensive_out_count = (df["expensive_out_state"] == 1).sum()
+            print(
+                f"DEBUG: Affordable out-state: {affordable_out_count}, Expensive out-state: {expensive_out_count}"
+            )
+
+        print("DEBUG: Derived field calculations complete")
+        return df
 
     def _get_first_available_value(self, df: pd.DataFrame, columns: list) -> pd.Series:
         """Get the first non-null value from a list of columns."""
@@ -397,70 +666,6 @@ class FinanceProcessor(IPEDSProcessor):
         result[only_second] = series2[only_second]
 
         return result
-
-    def add_derived_fields(self, df: pd.DataFrame) -> pd.DataFrame:
-        """Add derived fields for financial analysis."""
-        df = df.copy()
-
-        # Financial health indicators - only calculate where we have data
-        if "total_revenues" in df.columns and "total_expenses" in df.columns:
-            # Net income - only where both exist
-            both_exist = pd.notna(df["total_revenues"]) & pd.notna(df["total_expenses"])
-            df["net_income"] = None
-            df.loc[both_exist, "net_income"] = (
-                df.loc[both_exist, "total_revenues"]
-                - df.loc[both_exist, "total_expenses"]
-            )
-
-            # Expense ratio - only where both exist and revenue > 0
-            valid_ratio = both_exist & (df["total_revenues"] > 0)
-            df["expense_ratio"] = None
-            df.loc[valid_ratio, "expense_ratio"] = (
-                df.loc[valid_ratio, "total_expenses"]
-                / df.loc[valid_ratio, "total_revenues"]
-            ).round(3)
-
-            # Financial stability - conservative definition
-            df["financially_stable"] = 0
-            stable_mask = (
-                pd.notna(df["net_income"])
-                & (df["net_income"] >= 0)
-                & pd.notna(df["expense_ratio"])
-                & (df["expense_ratio"] <= 1.0)
-            )
-            df.loc[stable_mask, "financially_stable"] = 1
-
-        # Cost categories for tuition data
-        cost_columns = [
-            "total_in_state_tuition_fees",
-            "total_out_state_tuition_fees",
-            "total_cost_in_state",
-            "total_cost_out_state",
-        ]
-
-        for col in cost_columns:
-            if col in df.columns:
-                category_col = col + "_category"
-                df[category_col] = df[col].apply(self._categorize_cost)
-
-        # Affordability flags
-        if "total_in_state_tuition_fees" in df.columns:
-            df["affordable_in_state"] = (
-                df["total_in_state_tuition_fees"] <= 15000
-            ).astype(int)
-            df["expensive_in_state"] = (
-                df["total_in_state_tuition_fees"] >= 40000
-            ).astype(int)
-
-        if "total_out_state_tuition_fees" in df.columns:
-            df["affordable_out_state"] = (
-                df["total_out_state_tuition_fees"] <= 25000
-            ).astype(int)
-            df["expensive_out_state"] = (
-                df["total_out_state_tuition_fees"] >= 50000
-            ).astype(int)
-
-        return df
 
     def _categorize_cost(self, cost):
         """Categorize cost levels."""
